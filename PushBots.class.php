@@ -1,4 +1,4 @@
-<?php
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * PushBots Library v1.1b
  *
@@ -12,6 +12,7 @@ class PushBots
 	private $pushData ;
 	private $pushOneData ;
 	private $aliasData;
+	private $tagData;
 	private $deviceToken;
 	public $timeout = 0; 
 	public $connectTimeout = 0;
@@ -22,6 +23,11 @@ class PushBots
 		$this->pushData['msg'] = "Notification Message";
 		$this->pushData['badge'] = "+1";
 		$this->pushData['sound'] = "ping.aiff";
+		
+		$this->pushOneData['msg'] = "Notification Message";
+		$this->pushOneData['badge'] = "+1";
+		$this->pushOneData['sound'] = "ping.aiff";
+
 	}
 	
 	/**
@@ -40,7 +46,8 @@ class PushBots
 	 */
 	private function sendRequest($method, $host, $path, $data) {
 		$jsonData = json_encode($data);
-		echo $jsonData;
+		//echo $jsonData;
+		error_log("PSBOTS : NOTIFICATION ". $jsonData);
         $ci = curl_init();
 		
 		//PushBots Headers
@@ -99,7 +106,16 @@ class PushBots
         return $res; 
 		
 	}
-
+	
+	/**
+	 * Tag Device 
+	 */
+	 
+	public function setTag() {
+		$response = $this->sendRequest( 'PUT' ,'https://api.pushbots.com', '/tag', $this->tagData);
+		return $response;
+	}
+	
 	/**
 	 * Push Notification 
 	 */
@@ -128,16 +144,6 @@ class PushBots
 		return $response;
 	}
 
-	 /**
-	 * Remove devices by Alias
-	 */
-	
-	public function removeByAlias($alias) {
-		$response = $this->sendRequest( 'PUT' ,'https://api.pushbots.com', '/alias/del' , array("alias"=> $alias ));
-		return $response;
-	}
-
-
 	/**
 	 * set Platforms
 	 * @param	array	$platform	Platforms array 0=>iOS , 1=>Android
@@ -147,6 +153,7 @@ class PushBots
 			$platform = array($platform);
 		}
 		$this->pushData['platform'] = $platform;
+		$this->tagData['platform'] = $platform;
 	}
 	
 	public function Alert($alert) {
@@ -163,6 +170,7 @@ class PushBots
 	
 	public function Alias($alias) {
 		$this->pushData['alias'] = $alias;
+		$this->tagData['alias'] = $alias;
 	}
 	
 	public function exceptAlias($alias) {
@@ -175,12 +183,30 @@ class PushBots
 	 */
 	 
 	public function Tags($tags) {
+		/*
 		if(is_array($tags) != true){
 			$tags = array($tags);
 		}
 		if(count($tags) > 0){
-			$this->pushData['tags'] = $tags;
+			$this->pushData['tag'] = $tags;
+			$this->tagData['tag'] = $tags;
 		}
+		*/
+		$this->pushData['tag'] = $tags;
+		$this->tagData['tag'] = $tags;
+	}
+	
+	/**
+	 * set Tag Data
+	 * @param	integer	$platform 0=> iOS or 1=> Android.
+	 * @param	String	$alias User Alias.
+	 * @param	String 	$tag Device Tags Array.
+	 */
+	 
+	public function TagData($platform, $alias, $tag) {
+			$this->tagData['platform'] = $platform;
+			$this->tagData['tag'] = $tag;
+			$this->tagData['alias'] = $alias;
 	}
 	
 	/**
@@ -207,6 +233,9 @@ class PushBots
 	public function TokenOne($token) {
 		$this->pushOneData['token'] = $token;
 	}
+	public function GameID($game_id) {
+		$this->pushOneData['game_id'] = $game_id;
+	}
 	
 	public function AlertOne($alert) {
 		$this->pushOneData['msg'] = $alert;
@@ -220,10 +249,6 @@ class PushBots
 		$this->pushOneData['sound'] = $sound;
 	}
 	
-	/**
-	 * set Payload for sending to single device
-	 * @param	array	$payload	Custom fields Array.
-	 */
 	public function PayloadOne($customfields) {
 		if(is_array($customfields) != true){
 			$customfields = array($customfields);
@@ -232,6 +257,7 @@ class PushBots
 			$this->pushOneData['payload'] = $customfields;
 		}
 	}
+	
 	
 	/**
 	 * set Payload
